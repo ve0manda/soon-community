@@ -55,5 +55,30 @@ addColumnIfMissing('google_id', 'google_id TEXT');
 addColumnIfMissing('google_email', "google_email TEXT DEFAULT ''");
 addColumnIfMissing('google_avatar', "google_avatar TEXT DEFAULT ''");
 addColumnIfMissing('avatar_type', "avatar_type TEXT DEFAULT 'image'");
+addColumnIfMissing('card_color', "card_color TEXT DEFAULT '#0a0a0f'");
+addColumnIfMissing('card_opacity', 'card_opacity INTEGER DEFAULT 82');
+addColumnIfMissing('is_member', 'is_member INTEGER DEFAULT 0');
+addColumnIfMissing('og_override', 'og_override INTEGER DEFAULT NULL'); // NULL=auto, 1=force-on, 0=force-off
+addColumnIfMissing('corner_badge', "corner_badge TEXT DEFAULT ''");
+addColumnIfMissing('rgb_border', 'rgb_border INTEGER DEFAULT 0');
+addColumnIfMissing('avatar_source', "avatar_source TEXT DEFAULT 'custom'"); // custom | discord | google
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS site_settings (
+  key TEXT PRIMARY KEY,
+  value TEXT
+);
+`);
+
+function getSetting(key, fallback) {
+  const row = db.prepare('SELECT value FROM site_settings WHERE key = ?').get(key);
+  return row ? row.value : fallback;
+}
+function setSetting(key, value) {
+  db.prepare('INSERT INTO site_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
+    .run(key, value);
+}
 
 module.exports = db;
+module.exports.getSetting = getSetting;
+module.exports.setSetting = setSetting;
