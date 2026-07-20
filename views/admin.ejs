@@ -5,20 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>لوحة الإدارة — $oon.lol</title>
   <link rel="stylesheet" href="/public/css/style.css">
+  <style>:root { --violet: <%= siteAccent %>; --void: <%= siteVoid %>; }</style>
   <style>
     table { width: 100%; border-collapse: collapse; font-size: 14px; }
     th, td { padding: 12px 10px; text-align: right; border-bottom: 1px solid var(--border); }
     th { color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 12px; text-transform: uppercase; }
-    .pill { display:inline-flex; align-items:center; gap:4px; font-size:11px; padding:3px 9px; border-radius:100px; font-family:'JetBrains Mono',monospace; }
+    .pill { display:inline-flex; align-items:center; gap:4px; font-size:11px; padding:3px 9px; border-radius:100px; font-family:'JetBrains Mono',monospace; cursor:pointer; border:none; }
     .pill-on { background:rgba(52,211,153,.15); color:#34d399; border:1px solid rgba(52,211,153,.4); }
     .pill-off { background:rgba(139,139,154,.12); color:var(--muted); border:1px solid var(--border); }
+    .pill-mixed { background:rgba(224,71,92,.15); color:#e0475c; border:1px solid rgba(224,71,92,.4); }
     .actions { display:flex; gap:6px; flex-wrap:wrap; }
     .actions button { padding:6px 10px; font-size:12px; }
   </style>
 </head>
 <body>
   <nav class="nav">
-    <a href="/" class="brand"><span class="dot"></span> $oon.lol 🦇 <span style="color:var(--muted); font-size:14px;">/ الإدارة</span></a>
+    <a href="/" class="brand"><span class="dot"></span> <span class="brand-animated">$oon.lol</span> 🦇 <span style="color:var(--muted); font-size:14px;">/ الإدارة</span></a>
     <div class="nav-links">
       <a href="/dashboard" class="btn">لوحتي</a>
     </div>
@@ -26,6 +28,24 @@
 
   <div class="section">
     <% if (message) { %><div class="success-box"><%= message %></div><% } %>
+
+    <div class="panel" style="max-width:500px; margin-bottom:24px;">
+      <h3>🎨 ألوان الموقع العامة</h3>
+      <p class="hint">هذي الألوان تتحكم بشكل الموقع نفسه (الصفحة الرئيسية، تسجيل الدخول، لوحة التحكم) — مو صفحات البروفايل الشخصية للمستخدمين، لأن كل مستخدم يخصص صفحته لحاله.</p>
+      <form method="POST" action="/admin/site-settings">
+        <div class="row-2">
+          <div class="field">
+            <label>اللون المميز الرئيسي</label>
+            <div class="color-field"><input type="color" name="site_accent" value="<%= siteAccent %>"></div>
+          </div>
+          <div class="field">
+            <label>لون الخلفية الأساسي</label>
+            <div class="color-field"><input type="color" name="site_void" value="<%= siteBg %>"></div>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">حفظ ألوان الموقع</button>
+      </form>
+    </div>
 
     <form method="GET" action="/admin" style="margin-bottom:20px; max-width:340px;">
       <input type="text" name="q" value="<%= q %>" placeholder="ابحث باسم المستخدم أو الإيميل..."
@@ -38,36 +58,56 @@
           <tr>
             <th>#</th>
             <th>المستخدم</th>
-            <th>الإيميل</th>
             <th>Premium</th>
+            <th>عضو</th>
+            <th>OG</th>
             <th>موثّق</th>
             <th>أدمن</th>
-            <th>Discord</th>
             <th>زيارات</th>
             <th>إجراءات</th>
           </tr>
         </thead>
         <tbody>
-          <% users.forEach(u => { %>
+          <% users.forEach(u => {
+               const ogState = u.og_override === 1 ? 'on' : u.og_override === 0 ? 'off' : 'auto';
+               const ogLabel = ogState === 'on' ? '💎 مفروضة' : ogState === 'off' ? 'ملغاة' : (u.id <= 50 ? '💎 تلقائي' : 'لا');
+               const ogClass = ogState === 'on' ? 'pill-on' : ogState === 'off' ? 'pill-off' : (u.id <= 50 ? 'pill-mixed' : 'pill-off');
+          %>
             <tr>
               <td class="mono"><%= u.id %></td>
-              <td><a href="/u/<%= u.username %>" target="_blank" style="color:var(--cyan);">@<%= u.username %></a></td>
-              <td class="mono" style="font-size:12px;"><%= u.email %></td>
-              <td><span class="pill <%= u.is_premium ? 'pill-on' : 'pill-off' %>"><%= u.is_premium ? '⭐ نعم' : 'لا' %></span></td>
-              <td><span class="pill <%= u.is_verified ? 'pill-on' : 'pill-off' %>"><%= u.is_verified ? '✅ نعم' : 'لا' %></span></td>
-              <td><span class="pill <%= u.is_admin ? 'pill-on' : 'pill-off' %>"><%= u.is_admin ? '🛡️ نعم' : 'لا' %></span></td>
-              <td><%= u.discord_id ? '🎮 ' + u.discord_username : '—' %></td>
+              <td>
+                <a href="/u/<%= u.username %>" target="_blank" style="color:var(--cyan);">@<%= u.username %></a>
+                <% if (u.discord_id) { %><span title="مربوط بـ Discord">🎮</span><% } %>
+                <% if (u.google_id) { %><span title="مربوط بـ Google">🔵</span><% } %>
+              </td>
+              <td>
+                <form method="POST" action="/admin/users/<%= u.id %>/toggle-premium">
+                  <button type="submit" class="pill <%= u.is_premium ? 'pill-on' : 'pill-off' %>"><%= u.is_premium ? '⭐ نعم' : 'لا' %></button>
+                </form>
+              </td>
+              <td>
+                <form method="POST" action="/admin/users/<%= u.id %>/toggle-member">
+                  <button type="submit" class="pill <%= u.is_member ? 'pill-on' : 'pill-off' %>"><%= u.is_member ? '👤 نعم' : 'لا' %></button>
+                </form>
+              </td>
+              <td>
+                <form method="POST" action="/admin/users/<%= u.id %>/toggle-og">
+                  <button type="submit" class="pill <%= ogClass %>" title="اضغط للتبديل: تلقائي → فرض تفعيل → فرض إلغاء"><%= ogLabel %></button>
+                </form>
+              </td>
+              <td>
+                <form method="POST" action="/admin/users/<%= u.id %>/toggle-verified">
+                  <button type="submit" class="pill <%= u.is_verified ? 'pill-on' : 'pill-off' %>"><%= u.is_verified ? '✅ نعم' : 'لا' %></button>
+                </form>
+              </td>
+              <td>
+                <form method="POST" action="/admin/users/<%= u.id %>/toggle-admin">
+                  <button type="submit" class="pill <%= u.is_admin ? 'pill-on' : 'pill-off' %>"><%= u.is_admin ? '🛡️ نعم' : 'لا' %></button>
+                </form>
+              </td>
               <td class="mono"><%= u.views %></td>
               <td class="actions">
-                <form method="POST" action="/admin/users/<%= u.id %>/toggle-premium">
-                  <button type="submit" class="btn"><%= u.is_premium ? 'إلغاء Premium' : 'ترقية لـ Premium' %></button>
-                </form>
-                <form method="POST" action="/admin/users/<%= u.id %>/toggle-verified">
-                  <button type="submit" class="btn"><%= u.is_verified ? 'إلغاء التوثيق' : 'توثيق' %></button>
-                </form>
-                <form method="POST" action="/admin/users/<%= u.id %>/toggle-admin">
-                  <button type="submit" class="btn btn-danger"><%= u.is_admin ? 'إلغاء الأدمن' : 'ترقية لأدمن' %></button>
-                </form>
+                <a href="/u/<%= u.username %>" target="_blank" class="btn" style="padding:6px 10px; font-size:12px;">عرض الصفحة</a>
               </td>
             </tr>
           <% }) %>
