@@ -69,9 +69,16 @@ router.post('/dashboard/profile', requireAuth, (req, res) => {
   res.redirect('/dashboard?msg=تم حفظ التغييرات بنجاح');
 });
 
-router.post('/dashboard/avatar', requireAuth, avatarUpload.single('avatar'), (req, res) => {
-  const user = db.prepare('SELECT is_premium FROM users WHERE id = ?').get(req.session.userId);
-  if (req.file) {
+router.post('/dashboard/avatar', requireAuth, (req, res) => {
+  avatarUpload.single('avatar')(req, res, (err) => {
+    if (err) {
+      const msg = err.code === 'LIMIT_FILE_SIZE' ? 'الملف+كبير+جداً+(الحد+الأقصى+20MB)' : 'صيغة+الملف+غير+مدعومة';
+      return res.redirect(`/dashboard?msg=فشل+رفع+الصورة+—+${msg}`);
+    }
+    if (!req.file) {
+      return res.redirect('/dashboard?msg=لم+يتم+اختيار+ملف+—+صيغة+الصورة+غير+مدعومة+أو+لم+تُختر');
+    }
+    const user = db.prepare('SELECT is_premium FROM users WHERE id = ?').get(req.session.userId);
     const isVideo = req.file.mimetype.startsWith('video');
     if (isVideo && !user.is_premium) {
       fs.unlinkSync(req.file.path);
@@ -80,13 +87,20 @@ router.post('/dashboard/avatar', requireAuth, avatarUpload.single('avatar'), (re
     const url = `/uploads/avatars/${req.file.filename}`;
     const type = isVideo ? 'video' : 'image';
     db.prepare('UPDATE users SET avatar_url = ?, avatar_type = ? WHERE id = ?').run(url, type, req.session.userId);
-  }
-  res.redirect('/dashboard?msg=تم تحديث الصورة الشخصية');
+    res.redirect('/dashboard?msg=تم تحديث الصورة الشخصية بنجاح ✅');
+  });
 });
 
-router.post('/dashboard/background', requireAuth, backgroundUpload.single('background'), (req, res) => {
-  const user = db.prepare('SELECT is_premium FROM users WHERE id = ?').get(req.session.userId);
-  if (req.file) {
+router.post('/dashboard/background', requireAuth, (req, res) => {
+  backgroundUpload.single('background')(req, res, (err) => {
+    if (err) {
+      const msg = err.code === 'LIMIT_FILE_SIZE' ? 'الملف+كبير+جداً+(الحد+الأقصى+25MB)' : 'صيغة+الملف+غير+مدعومة';
+      return res.redirect(`/dashboard?msg=فشل+رفع+الخلفية+—+${msg}`);
+    }
+    if (!req.file) {
+      return res.redirect('/dashboard?msg=لم+يتم+اختيار+ملف+—+صيغة+الخلفية+غير+مدعومة+أو+لم+تُختر');
+    }
+    const user = db.prepare('SELECT is_premium FROM users WHERE id = ?').get(req.session.userId);
     const isVideo = req.file.mimetype.startsWith('video');
     if (isVideo && !user.is_premium) {
       fs.unlinkSync(req.file.path);
@@ -96,16 +110,23 @@ router.post('/dashboard/background', requireAuth, backgroundUpload.single('backg
     const type = isVideo ? 'video' : 'image';
     db.prepare('UPDATE users SET background_url = ?, background_type = ? WHERE id = ?')
       .run(url, type, req.session.userId);
-  }
-  res.redirect('/dashboard?msg=تم تحديث الخلفية');
+    res.redirect('/dashboard?msg=تم تحديث الخلفية بنجاح ✅');
+  });
 });
 
-router.post('/dashboard/audio', requireAuth, audioUpload.single('audio'), (req, res) => {
-  if (req.file) {
+router.post('/dashboard/audio', requireAuth, (req, res) => {
+  audioUpload.single('audio')(req, res, (err) => {
+    if (err) {
+      const msg = err.code === 'LIMIT_FILE_SIZE' ? 'الملف+كبير+جداً+(الحد+الأقصى+15MB)' : 'صيغة+الملف+غير+مدعومة';
+      return res.redirect(`/dashboard?msg=فشل+رفع+الموسيقى+—+${msg}`);
+    }
+    if (!req.file) {
+      return res.redirect('/dashboard?msg=لم+يتم+اختيار+ملف+—+صيغة+الصوت+غير+مدعومة+أو+لم+تُختر');
+    }
     const url = `/uploads/audio/${req.file.filename}`;
     db.prepare('UPDATE users SET audio_url = ? WHERE id = ?').run(url, req.session.userId);
-  }
-  res.redirect('/dashboard?msg=تم تحديث الموسيقى');
+    res.redirect('/dashboard?msg=تم تحديث الموسيقى بنجاح ✅');
+  });
 });
 
 // ----- Links CRUD -----
