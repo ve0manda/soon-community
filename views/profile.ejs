@@ -31,42 +31,85 @@
     <div class="audio-toggle" id="audio-toggle">▶</div>
   <% } %>
 
+  <%
+    // تحديد فئة (tier) عداد الزيارات حسب العدد
+    let viewsTier = 'views-tier-0';
+    if (profile.views >= 1000) viewsTier = 'views-tier-3';
+    else if (profile.views >= 200) viewsTier = 'views-tier-2';
+    else if (profile.views >= 50) viewsTier = 'views-tier-1';
+
+    // تحويل card_color + card_opacity لـ rgba
+    function hexToRgb(hex) {
+      hex = (hex || '#0a0a0f').replace('#', '');
+      if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+      const num = parseInt(hex, 16);
+      return `${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}`;
+    }
+    const cardRgb = hexToRgb(profile.card_color);
+    const cardAlpha = (profile.card_opacity != null ? profile.card_opacity : 82) / 100;
+  %>
+
   <div class="profile-page">
-    <div class="profile-card" style="--p-accent: <%= profile.accent_color %>;">
-      <div class="profile-card-inner">
-        <% if (profile.avatar_type === 'video' && profile.avatar_url) { %>
-          <video class="profile-avatar" src="<%= profile.avatar_url %>" autoplay muted loop playsinline></video>
-        <% } else { %>
-          <img class="profile-avatar" src="<%= profile.avatar_url || '/public/img/default-avatar.svg' %>" alt="avatar">
+    <div class="profile-card <%= profile.rgb_border ? 'rgb-border' : '' %>" style="--p-accent: <%= profile.accent_color %>;">
+      <div class="profile-card-inner" style="position:relative; z-index:1; background: rgba(<%= cardRgb %>, <%= cardAlpha %>);">
+
+        <% if (profile.corner_badge) { %>
+          <div class="corner-badge"><%= profile.corner_badge %></div>
         <% } %>
+
+        <% if (avatar.type === 'video' && avatar.url) { %>
+          <video class="profile-avatar" src="<%= avatar.url %>" autoplay muted loop playsinline></video>
+        <% } else { %>
+          <img class="profile-avatar" src="<%= avatar.url || '/public/img/default-avatar.svg' %>" alt="avatar">
+        <% } %>
+
         <div class="profile-name">
           <%= profile.display_name || profile.username %>
         </div>
+
         <% if (badges.length) { %>
-          <div style="display:flex; justify-content:center; flex-wrap:wrap; gap:6px; margin-bottom:10px;">
-            <% badges.forEach(b => { %>
-              <span class="mono" title="<%= b.label %>" style="font-size:11px; border:1px solid <%= b.color %>55; background:<%= b.color %>22; color:<%= b.color %>; padding:3px 9px; border-radius:100px;">
-                <%= b.icon %> <%= b.label %>
-              </span>
-            <% }) %>
+          <button type="button" class="badges-toggle" id="badges-toggle">
+            <span class="arrow">▾</span> <%= badges.length %> شارة
+          </button>
+          <div class="badges-collapse" id="badges-collapse">
+            <div style="display:flex; justify-content:center; flex-wrap:wrap; gap:6px; margin-bottom:10px;">
+              <% badges.forEach(b => { %>
+                <span class="mono" title="<%= b.label %>" style="font-size:11px; border:1px solid <%= b.color %>55; background:<%= b.color %>22; color:<%= b.color %>; padding:3px 9px; border-radius:100px;">
+                  <%= b.icon %> <%= b.label %>
+                </span>
+              <% }) %>
+            </div>
           </div>
         <% } %>
+
         <div class="profile-handle">@<%= profile.username %></div>
         <% if (profile.bio) { %>
           <div class="profile-bio" data-typing="<%= profile.bio %>"></div>
         <% } %>
         <div class="profile-links">
-          <% links.forEach(link => { %>
-            <a class="profile-link" href="<%= link.url %>" target="_blank" rel="noopener">
-              <%= link.label %>
+          <% links.forEach(link => {
+               const isDiscord = /discord\.(gg|com)/i.test(link.url);
+          %>
+            <a class="profile-link <%= isDiscord ? 'is-discord' : '' %>" href="<%= link.url %>" target="_blank" rel="noopener">
+              <% if (isDiscord) { %>🎮 <% } %><%= link.label %>
             </a>
           <% }) %>
         </div>
-        <div class="profile-views">👁 <%= profile.views %> زيارة</div>
+        <div class="profile-views <%= viewsTier %>">👁 <%= profile.views %> زيارة</div>
       </div>
     </div>
   </div>
 
   <script src="/public/js/profile-effects.js"></script>
+  <script>
+    const badgesToggle = document.getElementById('badges-toggle');
+    const badgesCollapse = document.getElementById('badges-collapse');
+    if (badgesToggle && badgesCollapse) {
+      badgesToggle.addEventListener('click', () => {
+        badgesToggle.classList.toggle('open');
+        badgesCollapse.classList.toggle('open');
+      });
+    }
+  </script>
 </body>
 </html>
