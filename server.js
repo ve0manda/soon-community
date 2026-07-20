@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 
 const authRoutes = require('./routes/auth');
@@ -21,6 +22,7 @@ app.set('views', path.join(__dirname, 'views'));
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(cookieParser());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
@@ -30,6 +32,13 @@ app.use(session({
   saveUninitialized: false,
   cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 يوم
 }));
+
+// ----- ألوان الموقع العامة (يتحكم فيها الأدمن من /admin) تتوفر لكل الصفحات -----
+app.use((req, res, next) => {
+  res.locals.siteAccent = db.getSetting('site_accent', '#a01c2c');
+  res.locals.siteVoid = db.getSetting('site_void', '#0b0709');
+  next();
+});
 
 // ----- Subdomain detection middleware -----
 // إذا كان ENABLE_SUBDOMAINS=true وطلب المستخدم mahmoud.example.com يُعرض بروفايله مباشرة
