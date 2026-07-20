@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>$oon.lol — صفحتك الشخصية المظلمة</title>
   <link rel="stylesheet" href="/public/css/style.css">
+  <style>:root { --violet: <%= siteAccent %>; --void: <%= siteVoid %>; }</style>
 </head>
 <body>
   <nav class="nav">
-    <div class="brand"><span class="dot"></span> $oon.lol 🦇</div>
+    <div class="brand"><span class="dot"></span> <span class="brand-animated">$oon.lol</span> 🦇</div>
     <div class="nav-links">
       <% if (loggedIn) { %>
         <a href="/dashboard" class="btn btn-primary">لوحة التحكم</a>
