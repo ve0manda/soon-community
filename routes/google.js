@@ -91,18 +91,27 @@ router.get('/auth/google/callback', requireGoogleConfig, async (req, res) => {
     let user = db.prepare('SELECT * FROM users WHERE google_id = ?').get(gUser.id);
 
     if (!user) {
-      const usernameSeed = googleEmail ? googleEmail.split('@')[0] : gUser.name;
-      const username = uniqueUsernameFrom(usernameSeed);
-      const email = googleEmail || `${gUser.id}@google.local`;
-      const info = db.prepare(`
-        INSERT INTO users (username, email, password_hash, display_name, avatar_url, google_id, google_email, google_avatar)
-        VALUES (?, ?, NULL, ?, ?, ?, ?, ?)
-      `).run(username, email, gUser.name || username, googleAvatar, gUser.id, googleEmail, googleAvatar);
-      user = { id: info.lastInsertRowid };
+      // لو فيه حساب موجود مسبقاً بنفس الإيميل (تسجيل يدوي أو عبر Discord)، اربط Google فيه بدل إنشاء حساب مكرر
+      const existingByEmail = googleEmail ? db.prepare('SELECT * FROM users WHERE email = ?').get(googleEmail) : null;
 
-      const admins = (process.env.ADMIN_USERNAMES || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-      if (admins.includes(username.toLowerCase())) {
-        db.prepare('UPDATE users SET is_admin = 1 WHERE id = ?').run(user.id);
+      if (existingByEmail) {
+        db.prepare('UPDATE users SET google_id = ?, google_email = ?, google_avatar = ? WHERE id = ?')
+          .run(gUser.id, googleEmail, googleAvatar, existingByEmail.id);
+        user = existingByEmail;
+      } else {
+        const usernameSeed = googleEmail ? googleEmail.split('@')[0] : gUser.name;
+        const username = uniqueUsernameFrom(usernameSeed);
+        const email = googleEmail || `${gUser.id}@google.local`;
+        const info = db.prepare(`
+          INSERT INTO users (username, email, password_hash, display_name, avatar_url, google_id, google_email, google_avatar)
+          VALUES (?, ?, NULL, ?, ?, ?, ?, ?)
+        `).run(username, email, gUser.name || username, googleAvatar, gUser.id, googleEmail, googleAvatar);
+        user = { id: info.lastInsertRowid };
+
+        const admins = (process.env.ADMIN_USERNAMES || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+        if (admins.includes(username.toLowerCase())) {
+          db.prepare('UPDATE users SET is_admin = 1 WHERE id = ?').run(user.id);
+        }
       }
     }
 
