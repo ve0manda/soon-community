@@ -95,17 +95,26 @@ router.get('/auth/discord/callback', requireDiscordConfig, async (req, res) => {
     let user = db.prepare('SELECT * FROM users WHERE discord_id = ?').get(dUser.id);
 
     if (!user) {
-      const username = uniqueUsernameFrom(discordUsername);
-      const email = dUser.email || `${dUser.id}@discord.local`;
-      const info = db.prepare(`
-        INSERT INTO users (username, email, password_hash, display_name, avatar_url, discord_id, discord_username, discord_avatar)
-        VALUES (?, ?, NULL, ?, ?, ?, ?, ?)
-      `).run(username, email, discordUsername, discordAvatar, dUser.id, discordUsername, discordAvatar);
-      user = { id: info.lastInsertRowid };
+      // لو فيه حساب موجود مسبقاً بنفس الإيميل (تسجيل يدوي أو عبر Google)، اربط Discord فيه بدل إنشاء حساب مكرر
+      const existingByEmail = dUser.email ? db.prepare('SELECT * FROM users WHERE email = ?').get(dUser.email) : null;
 
-      const admins = (process.env.ADMIN_USERNAMES || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-      if (admins.includes(username.toLowerCase())) {
-        db.prepare('UPDATE users SET is_admin = 1 WHERE id = ?').run(user.id);
+      if (existingByEmail) {
+        db.prepare('UPDATE users SET discord_id = ?, discord_username = ?, discord_avatar = ? WHERE id = ?')
+          .run(dUser.id, discordUsername, discordAvatar, existingByEmail.id);
+        user = existingByEmail;
+      } else {
+        const username = uniqueUsernameFrom(discordUsername);
+        const email = dUser.email || `${dUser.id}@discord.local`;
+        const info = db.prepare(`
+          INSERT INTO users (username, email, password_hash, display_name, avatar_url, discord_id, discord_username, discord_avatar)
+          VALUES (?, ?, NULL, ?, ?, ?, ?, ?)
+        `).run(username, email, discordUsername, discordAvatar, dUser.id, discordUsername, discordAvatar);
+        user = { id: info.lastInsertRowid };
+
+        const admins = (process.env.ADMIN_USERNAMES || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+        if (admins.includes(username.toLowerCase())) {
+          db.prepare('UPDATE users SET is_admin = 1 WHERE id = ?').run(user.id);
+        }
       }
     }
 
