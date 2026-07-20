@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة التحكم — $oon.lol</title>
+  <link rel="stylesheet" href="/public/css/style.css">
+</head>
+<body>
+  <nav class="nav">
+    <a href="/" class="brand"><span class="dot"></span> $oon.lol 🦇</a>
+    <div class="nav-links">
+      <% if (user.is_admin) { %><a href="/admin" class="btn">🛡️ الإدارة</a><% } %>
+      <a href="/u/<%= user.username %>" target="_blank" class="btn">👁 عرض صفحتي</a>
+      <form method="POST" action="/logout" style="display:inline">
+        <button type="submit" class="btn btn-danger">خروج</button>
+      </form>
+    </div>
+  </nav>
+
+  <div class="dash">
+    <aside class="dash-side">
+      <div class="dash-user">
+        <% if (user.avatar_type === 'video' && user.avatar_url) { %>
+          <video src="<%= user.avatar_url %>" autoplay muted loop playsinline style="width:38px; height:38px; border-radius:50%; object-fit:cover; background:var(--panel-2);"></video>
+        <% } else { %>
+          <img src="<%= user.avatar_url || user.discord_avatar || user.google_avatar || '/public/img/default-avatar.svg' %>" onerror="this.style.display='none'">
+        <% } %>
+        <div>
+          <div class="name"><%= user.display_name || user.username %></div>
+          <div class="link mono">/u/<%= user.username %></div>
+        </div>
+      </div>
+
+      <% if (badges.length) { %>
+        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:18px;">
+          <% badges.forEach(b => { %>
+            <span class="badge mono" style="border:1px solid <%= b.color %>44; background:<%= b.color %>1a; color:<%= b.color %>; padding:4px 9px; border-radius:100px;">
+              <%= b.icon %> <%= b.label %>
+            </span>
+          <% }) %>
+        </div>
+      <% } %>
+
+      <nav class="dash-nav">
+        <a href="#profile" class="active">✏️ الملف الشخصي</a>
+        <a href="#media">🖼 الوسائط</a>
+        <a href="#appearance">🎨 المظهر والتأثيرات</a>
+        <a href="#links">🔗 الروابط</a>
+        <a href="#account">⚙️ الحساب</a>
+      </nav>
+      <div class="badge mono" style="margin-top:20px;">👁 <%= user.views %> زيارة</div>
+    </aside>
+
+    <main class="dash-main">
+      <% if (message) { %><div class="success-box"><%= message %></div><% } %>
+
+      <div class="panel" id="profile">
+        <h3>المعلومات الأساسية</h3>
+        <p class="hint">هذي المعلومات تظهر في أعلى صفحتك العامة.</p>
+        <form method="POST" action="/dashboard/profile">
+          <div class="field">
+            <label>الاسم المعروض</label>
+            <input type="text" name="display_name" value="<%= user.display_name %>" maxlength="40">
+          </div>
+          <div class="field">
+            <label>البايو / الوصف</label>
+            <textarea name="bio" rows="3" maxlength="200"><%= user.bio %></textarea>
+          </div>
+
+          <div class="panel" id="appearance" style="background:transparent;border:none;padding:0;margin:20px 0;">
+            <h3 style="font-size:15px;">🎨 المظهر والتأثيرات</h3>
+            <div class="row-2">
+              <div class="field">
+                <label>لون الخلفية</label>
+                <div class="color-field"><input type="color" name="bg_color" value="<%= user.bg_color %>"></div>
+              </div>
+              <div class="field">
+                <label>اللون المميز (Accent)</label>
+                <div class="color-field"><input type="color" name="accent_color" value="<%= user.accent_color %>"></div>
+              </div>
+            </div>
+            <div class="field">
+              <label>لون النص</label>
+              <div class="color-field"><input type="color" name="text_color" value="<%= user.text_color %>"></div>
+            </div>
+            <div class="row-2">
+              <div class="field">
+                <label>تأثير الخلفية</label>
+                <select name="effect">
+                  <option value="none" <%= user.effect==='none'?'selected':'' %>>بدون تأثير</option>
+                  <option value="particles" <%= user.effect==='particles'?'selected':'' %>>جسيمات متحركة (Particles)</option>
+                  <option value="snow" <%= user.effect==='snow'?'selected':'' %>>ثلج ❄️</option>
+                  <option value="matrix" <%= user.effect==='matrix'?'selected':'' %>>ماتريكس</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>تأثير المؤشر (Cursor) <% if (!user.is_premium) { %><span style="color:#fbbf24;">⭐ Premium</span><% } %></label>
+                <select name="cursor_effect">
+                  <option value="none" <%= user.cursor_effect==='none'?'selected':'' %>>عادي</option>
+                  <option value="glow" <%= user.cursor_effect==='glow'?'selected':'' %> <%= !user.is_premium?'disabled':'' %>>توهج (Glow) <%= !user.is_premium?'— Premium فقط':'' %></option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label>نوع الخلفية <% if (!user.is_premium) { %><span style="color:#fbbf24;">— الفيديو يحتاج ⭐ Premium</span><% } %></label>
+              <select name="background_type">
+                <option value="color" <%= user.background_type==='color'?'selected':'' %>>لون فقط</option>
+                <option value="image" <%= user.background_type==='image'?'selected':'' %>>صورة مرفوعة</option>
+                <option value="video" <%= user.background_type==='video'?'selected':'' %> <%= !user.is_premium?'disabled':'' %>>فيديو مرفوع <%= !user.is_premium?'— Premium فقط':'' %></option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
+        </form>
+      </div>
+
+      <div class="panel" id="media">
+        <h3>🖼 الصورة الشخصية <% if (user.is_premium) { %>(صورة أو فيديو)<% } %></h3>
+        <p class="hint"><% if (!user.is_premium) { %>صورة شخصية متحركة (فيديو) متاحة لحسابات ⭐ Premium فقط. حالياً تقدر ترفع صورة.<% } %></p>
+        <form method="POST" action="/dashboard/avatar" enctype="multipart/form-data" style="display:flex; gap:10px; align-items:center;">
+          <input type="file" name="avatar" accept="<%= user.is_premium ? 'image/*,video/*' : 'image/*' %>" required>
+          <button type="submit" class="btn">رفع</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h3>🌆 الخلفية (صورة <% if (user.is_premium) { %>أو فيديو<% } %>)</h3>
+        <p class="hint"><% if (!user.is_premium) { %>رفع الفيديوهات كخلفية متاح لحسابات ⭐ Premium فقط. حالياً تقدر ترفع صورة.<% } %></p>
+        <form method="POST" action="/dashboard/background" enctype="multipart/form-data" style="display:flex; gap:10px; align-items:center;">
+          <input type="file" name="background" accept="<%= user.is_premium ? 'image/*,video/*' : 'image/*' %>" required>
+          <button type="submit" class="btn">رفع</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h3>🎵 الموسيقى الخلفية</h3>
+        <form method="POST" action="/dashboard/audio" enctype="multipart/form-data" style="display:flex; gap:10px; align-items:center;">
+          <input type="file" name="audio" accept="audio/*" required>
+          <button type="submit" class="btn">رفع</button>
+        </form>
+      </div>
+
+      <div class="panel" id="links">
+        <h3>🔗 روابطك <% if (linksLimit) { %><span class="mono" style="font-size:12px; color:var(--muted);">(<%= links.length %>/<%= linksLimit %>)</span><% } %></h3>
+        <p class="hint">تضاف بالترتيب اللي تحطها فيه.</p>
+        <% links.forEach(link => { %>
+          <div class="link-item">
+            <div class="meta"><%= link.label %><span class="mono"><%= link.url %></span></div>
+            <form method="POST" action="/dashboard/links/delete/<%= link.id %>">
+              <button type="submit" class="btn btn-danger" style="padding:6px 12px;">حذف</button>
+            </form>
+          </div>
+        <% }) %>
+
+        <% if (linksLimit && links.length >= linksLimit) { %>
+          <div class="error-box">وصلت للحد الأقصى (<%= linksLimit %> روابط) للحسابات المجانية. رقّي لـ Premium لإضافة روابط غير محدودة.</div>
+        <% } else { %>
+          <form method="POST" action="/dashboard/links/add" style="margin-top:16px;">
+            <div class="row-2">
+              <div class="field">
+                <label>اسم الرابط</label>
+                <input type="text" name="label" placeholder="Discord" required>
+              </div>
+              <div class="field">
+                <label>الرابط (URL)</label>
+                <input type="url" name="url" placeholder="https://discord.gg/..." required>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">إضافة الرابط</button>
+          </form>
+        <% } %>
+      </div>
+
+      <div class="panel" id="account">
+        <h3>⚙️ الحساب</h3>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:14px; background:var(--panel-2); border-radius:10px; margin-bottom:14px;">
+          <div>
+            <div style="font-weight:600;">حالة الحساب</div>
+            <div class="hint" style="margin:2px 0 0;">
+              <% if (user.is_premium) { %>
+                ⭐ حساب Premium — روابط غير محدودة، صورة شخصية وخلفية بالفيديو، وتأثيرات إضافية
+              <% } else { %>
+                حساب مجاني — محدود بـ <%= links.length %>/5 روابط. تواصل مع الإدارة للترقية لـ Premium.
+              <% } %>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:14px; background:var(--panel-2); border-radius:10px; margin-bottom:14px;">
+          <div>
+            <div style="font-weight:600;">🎮 حساب Discord</div>
+            <div class="hint" style="margin:2px 0 0;">
+              <% if (user.discord_id) { %>
+                مرتبط بحساب: <span class="mono"><%= user.discord_username %></span>
+              <% } else { %>
+                غير مرتبط — اربط حسابك للحصول على شارة Discord وتسجيل دخول أسرع.
+              <% } %>
+            </div>
+          </div>
+          <% if (user.discord_id) { %>
+            <form method="POST" action="/dashboard/discord/unlink">
+              <button type="submit" class="btn btn-danger">فك الربط</button>
+            </form>
+          <% } else { %>
+            <a href="/auth/discord" class="btn" style="background:#5865F2; border:none; color:#fff;">ربط الحساب</a>
+          <% } %>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:14px; background:var(--panel-2); border-radius:10px;">
+          <div>
+            <div style="font-weight:600;">🔵 حساب Google</div>
+            <div class="hint" style="margin:2px 0 0;">
+              <% if (user.google_id) { %>
+                مرتبط بحساب: <span class="mono"><%= user.google_email %></span>
+              <% } else { %>
+                غير مرتبط — اربط حسابك للحصول على شارة Google وتسجيل دخول أسرع.
+              <% } %>
+            </div>
+          </div>
+          <% if (user.google_id) { %>
+            <form method="POST" action="/dashboard/google/unlink">
+              <button type="submit" class="btn btn-danger">فك الربط</button>
+            </form>
+          <% } else { %>
+            <a href="/auth/google" class="btn" style="background:#fff; border:none; color:#1f1f1f;">ربط الحساب</a>
+          <% } %>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

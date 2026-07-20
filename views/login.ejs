@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تسجيل الدخول — $oon.lol</title>
+  <link rel="stylesheet" href="/public/css/style.css">
+</head>
+<body>
+  <nav class="nav">
+    <a href="/" class="brand"><span class="dot"></span> $oon.lol 🦇</a>
+  </nav>
+  <div class="auth-wrap">
+    <div class="card">
+      <h2>تسجيل الدخول</h2>
+      <% if (error) { %><div class="error-box"><%= error %></div><% } %>
+
+      <a href="/auth/discord" class="btn btn-block" style="background:#5865F2; border:none; color:#fff; margin-bottom:10px;">
+        🎮 دخول عبر Discord
+      </a>
+      <a href="/auth/google" class="btn btn-block" style="background:#fff; border:none; color:#1f1f1f; margin-bottom:14px;">
+        🔵 دخول عبر Google
+      </a>
+      <div class="form-footer" style="margin:0 0 16px;">— أو —</div>
+
+      <form method="POST" action="/login">
+        <div class="field">
+          <label>اسم المستخدم أو البريد الإلكتروني</label>
+          <input type="text" name="identifier" required>
+        </div>
+        <div class="field">
+          <label>كلمة المرور</label>
+          <input type="password" name="password" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">دخول</button>
+      </form>
+      <div class="form-footer">ما عندك حساب؟ <a href="/register" style="color:var(--cyan)">أنشئ واحد</a></div>
+    </div>
+  </div>
+</body>
+</html>

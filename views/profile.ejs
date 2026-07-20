@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= profile.display_name || profile.username %> — $oon.lol</title>
+  <link rel="stylesheet" href="/public/css/style.css">
+  <style>
+    body {
+      background: <%= profile.background_type === 'color' ? profile.bg_color : '#000' %>;
+      color: <%= profile.text_color %>;
+      <% if (profile.background_type === 'image') { %>
+        background-image: url('<%= profile.background_url %>');
+        background-size: cover;
+        background-position: center;
+      <% } %>
+    }
+  </style>
+</head>
+<body data-cursor="<%= profile.cursor_effect %>">
+  <% if (profile.background_type === 'video' && profile.background_url) { %>
+    <video autoplay muted loop playsinline style="position:fixed; inset:0; width:100%; height:100%; object-fit:cover; z-index:-1;">
+      <source src="<%= profile.background_url %>">
+    </video>
+  <% } %>
+
+  <canvas id="particles-canvas" data-effect="<%= profile.effect %>" data-accent="<%= profile.accent_color %>"></canvas>
+
+  <% if (profile.audio_url) { %>
+    <audio id="profile-audio" loop src="<%= profile.audio_url %>"></audio>
+    <div class="audio-toggle" id="audio-toggle">▶</div>
+  <% } %>
+
+  <div class="profile-page">
+    <div class="profile-card" style="--p-accent: <%= profile.accent_color %>;">
+      <div class="profile-card-inner">
+        <% if (profile.avatar_type === 'video' && profile.avatar_url) { %>
+          <video class="profile-avatar" src="<%= profile.avatar_url %>" autoplay muted loop playsinline></video>
+        <% } else { %>
+          <img class="profile-avatar" src="<%= profile.avatar_url || '/public/img/default-avatar.svg' %>" alt="avatar">
+        <% } %>
+        <div class="profile-name">
+          <%= profile.display_name || profile.username %>
+        </div>
+        <% if (badges.length) { %>
+          <div style="display:flex; justify-content:center; flex-wrap:wrap; gap:6px; margin-bottom:10px;">
+            <% badges.forEach(b => { %>
+              <span class="mono" title="<%= b.label %>" style="font-size:11px; border:1px solid <%= b.color %>55; background:<%= b.color %>22; color:<%= b.color %>; padding:3px 9px; border-radius:100px;">
+                <%= b.icon %> <%= b.label %>
+              </span>
+            <% }) %>
+          </div>
+        <% } %>
+        <div class="profile-handle">@<%= profile.username %></div>
+        <% if (profile.bio) { %>
+          <div class="profile-bio" data-typing="<%= profile.bio %>"></div>
+        <% } %>
+        <div class="profile-links">
+          <% links.forEach(link => { %>
+            <a class="profile-link" href="<%= link.url %>" target="_blank" rel="noopener">
+              <%= link.label %>
+            </a>
+          <% }) %>
+        </div>
+        <div class="profile-views">👁 <%= profile.views %> زيارة</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/public/js/profile-effects.js"></script>
+</body>
+</html>

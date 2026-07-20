@@ -1,0 +1,12 @@
+node_modules/
+.env
+db/app.db
+db/app.db-shm
+db/app.db-wal
+uploads/avatars/*
+uploads/backgrounds/*
+uploads/audio/*
+!uploads/avatars/.gitkeep
+!uploads/backgrounds/.gitkeep
+!uploads/audio/.gitkeep
+server.log
