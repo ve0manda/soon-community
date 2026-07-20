@@ -128,6 +128,18 @@
       <div class="panel">
         <h3>🌆 الخلفية (صورة <% if (user.is_premium) { %>أو فيديو<% } %>)</h3>
         <p class="hint"><% if (!user.is_premium) { %>رفع الفيديوهات كخلفية متاح لحسابات ⭐ Premium فقط. حالياً تقدر ترفع صورة.<% } %></p>
+        <% if (user.background_url) { %>
+          <div style="margin-bottom:12px;">
+            <% if (user.background_type === 'video') { %>
+              <video src="<%= user.background_url %>" muted loop autoplay playsinline style="width:100%; max-width:260px; height:120px; object-fit:cover; border-radius:10px; border:1px solid var(--panel-2);"></video>
+            <% } else { %>
+              <img src="<%= user.background_url %>" style="width:100%; max-width:260px; height:120px; object-fit:cover; border-radius:10px; border:1px solid var(--panel-2);">
+            <% } %>
+            <div class="hint" style="margin-top:6px;">✅ هذي الخلفية المحفوظة حالياً</div>
+          </div>
+        <% } else { %>
+          <div class="hint" style="margin-bottom:12px;">ما فيه خلفية مرفوعة بعد — يستخدم اللون فقط.</div>
+        <% } %>
         <form method="POST" action="/dashboard/background" enctype="multipart/form-data" style="display:flex; gap:10px; align-items:center;">
           <input type="file" name="background" accept="<%= user.is_premium ? 'image/*,video/*' : 'image/*' %>" required>
           <button type="submit" class="btn">رفع</button>
@@ -136,6 +148,14 @@
 
       <div class="panel">
         <h3>🎵 الموسيقى الخلفية</h3>
+        <% if (user.audio_url) { %>
+          <div style="margin-bottom:12px;">
+            <audio src="<%= user.audio_url %>" controls style="width:100%; max-width:320px;"></audio>
+            <div class="hint" style="margin-top:6px;">✅ هذا المقطع المحفوظ حالياً</div>
+          </div>
+        <% } else { %>
+          <div class="hint" style="margin-bottom:12px;">ما فيه موسيقى مرفوعة بعد.</div>
+        <% } %>
         <form method="POST" action="/dashboard/audio" enctype="multipart/form-data" style="display:flex; gap:10px; align-items:center;">
           <input type="file" name="audio" accept="audio/*" required>
           <button type="submit" class="btn">رفع</button>
