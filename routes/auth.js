@@ -5,7 +5,7 @@ const { redirectIfAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
-const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
+const USERNAME_RE = /^[a-zA-Z0-9._]{2,20}$/;
 
 function getAdminUsernames() {
   return (process.env.ADMIN_USERNAMES || '')
@@ -32,7 +32,10 @@ router.post('/register', redirectIfAuth, (req, res) => {
     return res.render('register', { error: 'كل الحقول مطلوبة' });
   }
   if (!USERNAME_RE.test(username)) {
-    return res.render('register', { error: 'اسم المستخدم يجب أن يكون 3-20 حرف/رقم/شرطة سفلية فقط' });
+    return res.render('register', { error: 'اسم المستخدم يجب أن يكون حرفين على الأقل (20 كحد أقصى)، ويسمح فقط بحروف/أرقام/نقطة/شرطة سفلية' });
+  }
+  if (/^[._]|[._]$/.test(username) || /[._]{2,}/.test(username)) {
+    return res.render('register', { error: 'اسم المستخدم ما يجوز يبدأ أو ينتهي بنقطة/شرطة سفلية، ولا يحتوي عليهم متكررين' });
   }
   if (password.length < 6) {
     return res.render('register', { error: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' });
