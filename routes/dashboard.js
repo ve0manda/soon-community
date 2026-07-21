@@ -5,6 +5,7 @@ const fs = require('fs');
 const db = require('../db/database');
 const { requireAuth } = require('../middleware/auth');
 const { getBadges, FREE_LINKS_LIMIT } = require('../utils/badges');
+const { BACKGROUND_PRESETS } = require('../utils/presets');
 
 const router = express.Router();
 
@@ -57,7 +58,8 @@ router.get('/dashboard', requireAuth, (req, res) => {
     linksLimit: user.is_premium ? null : FREE_LINKS_LIMIT,
     message: req.query.msg || null,
     pendingRequest,
-    cliqAlias: process.env.CLIQ_ALIAS || 'ضع-alias-الدفع-هنا'
+    cliqAlias: process.env.CLIQ_ALIAS || 'ضع-alias-الدفع-هنا',
+    presets: BACKGROUND_PRESETS
   });
 });
 
@@ -184,6 +186,17 @@ router.post('/dashboard/google/unlink', requireAuth, (req, res) => {
   db.prepare("UPDATE users SET google_id = NULL, google_email = '', google_avatar = '' WHERE id = ?")
     .run(req.session.userId);
   res.redirect('/dashboard?msg=تم+فك+ربط+حساب+Google');
+});
+
+// ----- اختيار خلفية جاهزة بدون رفع -----
+router.post('/dashboard/background/preset', requireAuth, (req, res) => {
+  const preset = BACKGROUND_PRESETS.find(p => p.id === req.body.preset_id);
+  if (!preset) {
+    return res.redirect('/dashboard?msg=خلفية+غير+معروفة#background');
+  }
+  db.prepare("UPDATE users SET background_url = ?, background_type = 'preset' WHERE id = ?")
+    .run(preset.css, req.session.userId);
+  res.redirect(`/dashboard?msg=تم+تفعيل+خلفية+"${encodeURIComponent(preset.name)}"+✅#background`);
 });
 
 // ----- تقديم طلب اشتراك بريميوم عبر CliQ (يدوي، يراجعه الأدمن) -----
