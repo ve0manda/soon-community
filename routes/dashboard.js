@@ -22,19 +22,19 @@ function storageFor(folder) {
 
 const avatarUpload = multer({
   storage: storageFor('avatars'),
-  limits: { fileSize: 20 * 1024 * 1024 },
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB — يسمح بصور/فيديوهات عالية الجودة
   fileFilter: (req, file, cb) => cb(null, /^image\/|^video\//.test(file.mimetype))
 });
 
 const backgroundUpload = multer({
   storage: storageFor('backgrounds'),
-  limits: { fileSize: 25 * 1024 * 1024 },
+  limits: { fileSize: 80 * 1024 * 1024 }, // 80MB — خلفيات وفيديوهات بجودة أعلى
   fileFilter: (req, file, cb) => cb(null, /^image\/|^video\//.test(file.mimetype))
 });
 
 const audioUpload = multer({
   storage: storageFor('audio'),
-  limits: { fileSize: 15 * 1024 * 1024 },
+  limits: { fileSize: 30 * 1024 * 1024 }, // 30MB
   fileFilter: (req, file, cb) => cb(null, /^audio\//.test(file.mimetype))
 });
 
@@ -83,7 +83,7 @@ router.post('/dashboard/profile', requireAuth, (req, res) => {
 router.post('/dashboard/avatar', requireAuth, (req, res) => {
   avatarUpload.single('avatar')(req, res, (err) => {
     if (err) {
-      const msg = err.code === 'LIMIT_FILE_SIZE' ? 'الملف+كبير+جداً+(الحد+الأقصى+20MB)' : 'صيغة+الملف+غير+مدعومة';
+      const msg = err.code === 'LIMIT_FILE_SIZE' ? 'الملف+كبير+جداً+(الحد+الأقصى+50MB)' : 'صيغة+الملف+غير+مدعومة';
       return res.redirect(`/dashboard?msg=فشل+رفع+الصورة+—+${msg}`);
     }
     if (!req.file) {
@@ -105,7 +105,7 @@ router.post('/dashboard/avatar', requireAuth, (req, res) => {
 router.post('/dashboard/background', requireAuth, (req, res) => {
   backgroundUpload.single('background')(req, res, (err) => {
     if (err) {
-      const msg = err.code === 'LIMIT_FILE_SIZE' ? 'الملف+كبير+جداً+(الحد+الأقصى+25MB)' : 'صيغة+الملف+غير+مدعومة';
+      const msg = err.code === 'LIMIT_FILE_SIZE' ? 'الملف+كبير+جداً+(الحد+الأقصى+80MB)' : 'صيغة+الملف+غير+مدعومة';
       return res.redirect(`/dashboard?msg=فشل+رفع+الخلفية+—+${msg}`);
     }
     if (!req.file) {
@@ -128,7 +128,7 @@ router.post('/dashboard/background', requireAuth, (req, res) => {
 router.post('/dashboard/audio', requireAuth, (req, res) => {
   audioUpload.single('audio')(req, res, (err) => {
     if (err) {
-      const msg = err.code === 'LIMIT_FILE_SIZE' ? 'الملف+كبير+جداً+(الحد+الأقصى+15MB)' : 'صيغة+الملف+غير+مدعومة';
+      const msg = err.code === 'LIMIT_FILE_SIZE' ? 'الملف+كبير+جداً+(الحد+الأقصى+30MB)' : 'صيغة+الملف+غير+مدعومة';
       return res.redirect(`/dashboard?msg=فشل+رفع+الموسيقى+—+${msg}`);
     }
     if (!req.file) {
