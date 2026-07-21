@@ -32,7 +32,7 @@ function getBadges(user) {
     badges.push({ key: 'google', label: 'Google', icon: '🔵', color: '#4285F4' });
   }
   if (user.is_admin) {
-    badges.push({ key: 'admin', label: 'Web Owner', icon: '🛡️', color: '#f87171' });
+    badges.push({ key: 'admin', label: 'Web Owner', icon: '👑', color: '#ea71ca' });
   }
 
   return badges;
