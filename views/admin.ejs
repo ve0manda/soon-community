@@ -77,7 +77,14 @@
           <% users.forEach(u => { %>
             <tr>
               <td class="mono"><%= u.id %></td>
-              <td><a href="/u/<%= u.username %>" target="_blank" style="color:var(--cyan);">@<%= u.username %></a></td>
+              <td>
+                <a href="/u/<%= u.username %>" target="_blank" style="color:var(--cyan);">@<%= u.username %></a>
+                <form method="POST" action="/admin/users/<%= u.id %>/username" style="display:flex; gap:4px; margin-top:6px;">
+                  <input type="text" name="new_username" value="<%= u.username %>" maxlength="20"
+                    style="width:100px; font-size:12px; padding:4px 6px; border-radius:6px; border:1px solid var(--border); background:var(--panel-2); color:inherit;">
+                  <button type="submit" class="btn" style="padding:4px 8px; font-size:12px;">تغيير</button>
+                </form>
+              </td>
               <td class="mono" style="font-size:12px;"><%= u.email %></td>
               <td><span class="pill <%= u.is_premium ? 'pill-on' : 'pill-off' %>"><%= u.is_premium ? '⭐ نعم' : 'لا' %></span></td>
               <td><span class="pill <%= u.is_verified ? 'pill-on' : 'pill-off' %>"><%= u.is_verified ? '✅ نعم' : 'لا' %></span></td>
