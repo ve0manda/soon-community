@@ -63,6 +63,24 @@ router.get('/dashboard', requireAuth, (req, res) => {
   });
 });
 
+// ----- تغيير اليوزرنيم من طرف المستخدم نفسه -----
+router.post('/dashboard/username', requireAuth, (req, res) => {
+  const newUsername = (req.body.new_username || '').trim().toLowerCase();
+
+  if (!/^[a-z0-9._]{2,20}$/.test(newUsername)) {
+    return res.redirect('/dashboard?msg=يوزرنيم+غير+صالح+(حرفين+على+الأقل،+حروف/أرقام/نقطة/شرطة+سفلية+فقط)#account');
+  }
+  if (/^[._]|[._]$/.test(newUsername) || /[._]{2,}/.test(newUsername)) {
+    return res.redirect('/dashboard?msg=ما+يجوز+يبدأ/ينتهي+بنقطة+أو+شرطة+سفلية+متكررة#account');
+  }
+  const existing = db.prepare('SELECT id FROM users WHERE username = ? AND id != ?').get(newUsername, req.session.userId);
+  if (existing) {
+    return res.redirect('/dashboard?msg=اليوزرنيم+هذا+مستخدم+من+شخص+ثاني#account');
+  }
+  db.prepare('UPDATE users SET username = ? WHERE id = ?').run(newUsername, req.session.userId);
+  res.redirect('/dashboard?msg=تم+تغيير+اليوزرنيم+✅#account');
+});
+
 router.post('/dashboard/profile', requireAuth, (req, res) => {
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.session.userId);
   let { display_name, bio, bg_color, accent_color, text_color, effect, cursor_effect, background_type } = req.body;
