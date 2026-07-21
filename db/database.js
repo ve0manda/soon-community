@@ -55,30 +55,27 @@ addColumnIfMissing('google_id', 'google_id TEXT');
 addColumnIfMissing('google_email', "google_email TEXT DEFAULT ''");
 addColumnIfMissing('google_avatar', "google_avatar TEXT DEFAULT ''");
 addColumnIfMissing('avatar_type', "avatar_type TEXT DEFAULT 'image'");
-addColumnIfMissing('card_color', "card_color TEXT DEFAULT '#0a0a0f'");
-addColumnIfMissing('card_opacity', 'card_opacity INTEGER DEFAULT 82');
-addColumnIfMissing('is_member', 'is_member INTEGER DEFAULT 0');
-addColumnIfMissing('og_override', 'og_override INTEGER DEFAULT NULL'); // NULL=auto, 1=force-on, 0=force-off
-addColumnIfMissing('corner_badge', "corner_badge TEXT DEFAULT ''");
-addColumnIfMissing('rgb_border', 'rgb_border INTEGER DEFAULT 0');
-addColumnIfMissing('avatar_source', "avatar_source TEXT DEFAULT 'custom'"); // custom | discord | google
+addColumnIfMissing('premium_expires_at', 'premium_expires_at TEXT DEFAULT NULL');
 
+// ----- جدول طلبات الاشتراك (CliQ يدوي) -----
 db.exec(`
-CREATE TABLE IF NOT EXISTS site_settings (
-  key TEXT PRIMARY KEY,
-  value TEXT
+CREATE TABLE IF NOT EXISTS premium_requests (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  proof_url TEXT NOT NULL,
+  reference_note TEXT DEFAULT '',
+  status TEXT DEFAULT 'pending', -- pending | approved | rejected
+  admin_note TEXT DEFAULT '',
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  reviewed_at TEXT DEFAULT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 `);
 
-function getSetting(key, fallback) {
-  const row = db.prepare('SELECT value FROM site_settings WHERE key = ?').get(key);
-  return row ? row.value : fallback;
-}
-function setSetting(key, value) {
-  db.prepare('INSERT INTO site_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
-    .run(key, value);
-}
+// ----- إلغاء البريميوم تلقائياً بعد انتهاء 30 يوم -----
+db.prepare(`
+  UPDATE users SET is_premium = 0
+  WHERE is_premium = 1 AND premium_expires_at IS NOT NULL AND premium_expires_at < datetime('now')
+`).run();
 
 module.exports = db;
-module.exports.getSetting = getSetting;
-module.exports.setSetting = setSetting;
