@@ -354,14 +354,19 @@ a { color: inherit; text-decoration: none; }
   inset: -3px;
   border-radius: 22px;
   padding: 3px;
-  background: conic-gradient(from 0deg, #ff0040, #ff8a00, #ffee00, #00ff6a, #00c8ff, #7a00ff, #ff0040);
-  animation: rgb-spin 3s linear infinite;
+  background: linear-gradient(115deg,
+    #ff0040, #ff8a00, #ffee00, #00ff6a, #00c8ff, #7a00ff, #ff0040, #ff8a00, #ffee00, #00ff6a, #00c8ff, #7a00ff, #ff0040);
+  background-size: 400% 400%;
+  animation: rgb-flow 6s linear infinite;
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   z-index: 0;
 }
-@keyframes rgb-spin { to { transform: rotate(360deg); } }
+@keyframes rgb-flow {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 400% 0%; }
+}
 
 /* ---------- روابط ديسكورد تلقائية بأيقونة مميزة ---------- */
 .profile-link.is-discord { background: rgba(88,101,242,.12); border-color: rgba(88,101,242,.35); }
@@ -369,7 +374,7 @@ a { color: inherit; text-decoration: none; }
 
 /* ---------- معرض الخلفيات الجاهزة ---------- */
 .preset-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
-.preset-item { border-radius: 10px; overflow: hidden; border: 2px solid var(--border); cursor: pointer; aspect-ratio: 2/3; background-size: cover; background-position: center; transition: border-color .15s ease; }
+.preset-item { border-radius: 10px; overflow: hidden; border: 2px solid var(--border); cursor: pointer; aspect-ratio: 2/3; background-size: cover; background-position: center; transition: border-color .15s ease; padding: 0; outline: none; }
 .preset-item:hover { border-color: var(--violet); }
 
 /* ---------- زر العشوائي ---------- */
