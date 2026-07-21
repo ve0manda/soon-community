@@ -39,6 +39,8 @@ router.post('/admin/users/:id/username', requireAdmin, (req, res) => {
   db.prepare('UPDATE users SET username = ? WHERE id = ?').run(newUsername, req.params.id);
   res.redirect('/admin?msg=تم+تغيير+اليوزرنيم+✅');
 });
+
+router.post('/admin/users/:id/toggle-premium', requireAdmin, (req, res) => {
   const user = db.prepare('SELECT is_premium FROM users WHERE id = ?').get(req.params.id);
   if (!user) return res.redirect('/admin');
   const newVal = user.is_premium ? 0 : 1;
