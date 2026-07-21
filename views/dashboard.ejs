@@ -130,7 +130,12 @@
       <div class="panel">
         <h3>🌆 الخلفية (صورة <% if (user.is_premium) { %>أو فيديو<% } %>)</h3>
         <p class="hint"><% if (!user.is_premium) { %>رفع الفيديوهات كخلفية متاح لحسابات ⭐ Premium فقط. حالياً تقدر ترفع صورة.<% } %></p>
-        <% if (user.background_url) { %>
+        <% if (user.background_type === 'preset' && user.background_url) { %>
+          <div style="margin-bottom:12px;">
+            <div style="width:100%; max-width:260px; height:120px; border-radius:10px; border:1px solid var(--panel-2); background:<%= user.background_url %>;"></div>
+            <div class="hint" style="margin-top:6px;">✅ هذي الخلفية المحفوظة حالياً (جاهزة)</div>
+          </div>
+        <% } else if (user.background_url) { %>
           <div style="margin-bottom:12px;">
             <% if (user.background_type === 'video') { %>
               <video src="<%= user.background_url %>" muted loop autoplay playsinline style="width:100%; max-width:260px; height:120px; object-fit:cover; border-radius:10px; border:1px solid var(--panel-2);"></video>
@@ -148,6 +153,18 @@
           <span class="file-preview-name hint"></span>
           <button type="submit" class="btn">رفع</button>
         </form>
+
+        <p class="hint" style="margin-top:16px;">أو اختر خلفية جاهزة بدون رفع:</p>
+        <div class="preset-grid">
+          <% presets.forEach(p => { %>
+            <form method="POST" action="/dashboard/background/preset">
+              <input type="hidden" name="preset_id" value="<%= p.id %>">
+              <button type="submit" class="preset-item" title="<%= p.name %>"
+                style="background:<%= p.css %>; width:100%; border:2px solid <%= (user.background_type==='preset' && user.background_url===p.css) ? 'var(--violet)' : 'var(--border)' %>;">
+              </button>
+            </form>
+          <% }) %>
+        </div>
       </div>
 
       <div class="panel">
