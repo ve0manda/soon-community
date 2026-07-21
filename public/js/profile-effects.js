@@ -124,7 +124,31 @@
   const toggleBtn = document.getElementById('audio-toggle');
   if (audioEl && toggleBtn) {
     let playing = false;
-    toggleBtn.addEventListener('click', () => {
+
+    // محاولة تشغيل تلقائي فور فتح الصفحة
+    audioEl.play().then(() => {
+      playing = true;
+      toggleBtn.textContent = '⏸';
+    }).catch(() => {
+      // المتصفح منع التشغيل التلقائي (سياسة شائعة) — نبدأ عند أول تفاعل بالصفحة
+      playing = false;
+      toggleBtn.textContent = '▶';
+      const startOnFirstInteraction = () => {
+        if (!playing) {
+          audioEl.play().then(() => {
+            playing = true;
+            toggleBtn.textContent = '⏸';
+          }).catch(() => {});
+        }
+        document.removeEventListener('click', startOnFirstInteraction);
+        document.removeEventListener('touchstart', startOnFirstInteraction);
+      };
+      document.addEventListener('click', startOnFirstInteraction, { once: true });
+      document.addEventListener('touchstart', startOnFirstInteraction, { once: true });
+    });
+
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       if (playing) { audioEl.pause(); toggleBtn.textContent = '▶'; }
       else { audioEl.play().catch(() => {}); toggleBtn.textContent = '⏸'; }
       playing = !playing;
