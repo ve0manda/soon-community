@@ -25,6 +25,13 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
+// ----- ألوان الموقع العامة (تُستخدم بصفحات home/login/register) -----
+app.use((req, res, next) => {
+  res.locals.siteAccent = process.env.SITE_ACCENT || '#a01c2c';
+  res.locals.siteVoid = process.env.SITE_VOID || '#0d0a0c';
+  next();
+});
+
 app.use(session({
   store: new SqliteSessionStore({
     client: db,
