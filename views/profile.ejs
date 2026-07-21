@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/public/css/style.css">
   <style>
     body {
-      background: <%= profile.background_type === 'color' ? profile.bg_color : '#000' %>;
+      background: <%= profile.background_type === 'color' ? profile.bg_color : (profile.background_type === 'preset' ? profile.background_url : '#000') %>;
       color: <%= profile.text_color %>;
       <% if (profile.background_type === 'image') { %>
         background-image: url('<%= profile.background_url %>');
