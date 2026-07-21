@@ -58,6 +58,17 @@
       <div class="panel" id="profile">
         <h3>المعلومات الأساسية</h3>
         <p class="hint">هذي المعلومات تظهر في أعلى صفحتك العامة.</p>
+
+        <div class="field">
+          <label>اسم المستخدم (رابط صفحتك)</label>
+          <form method="POST" action="/dashboard/username" style="display:flex; gap:8px; align-items:center;">
+            <span class="hint" style="white-space:nowrap;">$oon.lol/u/</span>
+            <input type="text" name="new_username" value="<%= user.username %>" maxlength="20" pattern="[a-zA-Z0-9._]{2,20}">
+            <button type="submit" class="btn">تغيير</button>
+          </form>
+          <p class="hint" style="margin-top:6px;">حرفين على الأقل، حروف/أرقام/نقطة/شرطة سفلية فقط.</p>
+        </div>
+
         <form method="POST" action="/dashboard/profile">
           <div class="field">
             <label>الاسم المعروض</label>
