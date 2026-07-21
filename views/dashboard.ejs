@@ -280,5 +280,27 @@
       </div>
     </main>
   </div>
+
+  <script>
+    // ---- الحفاظ على مكان الصفحة بعد الحفظ/الرفع (بدل الرجوع لأعلى الصفحة) ----
+    document.addEventListener('submit', function (e) {
+      if (e.target && e.target.tagName === 'FORM') {
+        sessionStorage.setItem('dashboardScrollY', String(window.scrollY));
+      }
+    }, true);
+
+    (function restoreScroll() {
+      var y = sessionStorage.getItem('dashboardScrollY');
+      if (y !== null) {
+        sessionStorage.removeItem('dashboardScrollY');
+        // ننتظر تحميل كل العناصر (الصور خصوصاً) قبل ما نرجع لنفس المكان
+        window.addEventListener('load', function () {
+          window.scrollTo(0, parseInt(y, 10));
+        });
+        // محاولة فورية إضافية لو التحميل تأخر
+        requestAnimationFrame(function () { window.scrollTo(0, parseInt(y, 10)); });
+      }
+    })();
+  </script>
 </body>
 </html>
