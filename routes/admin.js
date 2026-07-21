@@ -13,49 +13,52 @@ router.get('/admin', requireAdmin, (req, res) => {
   } else {
     users = db.prepare('SELECT * FROM users ORDER BY id DESC').all();
   }
-  res.render('admin', {
-    users,
-    q,
-    message: req.query.msg || null,
-    siteAccent: db.getSetting('site_accent', '#a01c2c'),
-    siteBg: db.getSetting('site_void', '#0b0709')
-  });
+  const premiumRequests = db.prepare(`
+    SELECT premium_requests.*, users.username FROM premium_requests
+    JOIN users ON users.id = premium_requests.user_id
+    WHERE premium_requests.status = 'pending'
+    ORDER BY premium_requests.id ASC
+  `).all();
+  res.render('admin', { users, q, message: req.query.msg || null, premiumRequests });
 });
-
-function toggleField(field) {
-  return (req, res) => {
-    const row = db.prepare(`SELECT ${field} FROM users WHERE id = ?`).get(req.params.id);
-    if (!row) return res.redirect('/admin');
-    db.prepare(`UPDATE users SET ${field} = ? WHERE id = ?`).run(row[field] ? 0 : 1, req.params.id);
-    res.redirect('/admin?msg=تم+التحديث');
-  };
-}
 
 router.post('/admin/users/:id/toggle-premium', requireAdmin, (req, res) => {
   const user = db.prepare('SELECT is_premium FROM users WHERE id = ?').get(req.params.id);
   if (!user) return res.redirect('/admin');
   const newVal = user.is_premium ? 0 : 1;
-  db.prepare('UPDATE users SET is_premium = ?, premium_since = ? WHERE id = ?')
-    .run(newVal, newVal ? new Date().toISOString() : null, req.params.id);
+  const expires = newVal ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : null;
+  db.prepare('UPDATE users SET is_premium = ?, premium_since = ?, premium_expires_at = ? WHERE id = ?')
+    .run(newVal, newVal ? new Date().toISOString() : null, expires, req.params.id);
   res.redirect('/admin?msg=تم+تحديث+حالة+Premium');
 });
 
-router.post('/admin/users/:id/toggle-verified', requireAdmin, toggleField('is_verified'));
-router.post('/admin/users/:id/toggle-member', requireAdmin, toggleField('is_member'));
+// ----- الموافقة على طلب اشتراك CliQ: تفعيل بريميوم 30 يوم -----
+router.post('/admin/premium-requests/:id/approve', requireAdmin, (req, res) => {
+  const request = db.prepare('SELECT * FROM premium_requests WHERE id = ?').get(req.params.id);
+  if (!request || request.status !== 'pending') return res.redirect('/admin?msg=الطلب+غير+موجود');
+  const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  db.prepare('UPDATE users SET is_premium = 1, premium_since = ?, premium_expires_at = ? WHERE id = ?')
+    .run(new Date().toISOString(), expires, request.user_id);
+  db.prepare("UPDATE premium_requests SET status = 'approved', reviewed_at = datetime('now') WHERE id = ?")
+    .run(request.id);
+  res.redirect('/admin?msg=تم+قبول+الطلب+وتفعيل+Premium+لمدة+30+يوم');
+});
 
-router.post('/admin/users/:id/toggle-og', requireAdmin, (req, res) => {
-  const user = db.prepare('SELECT og_override, id FROM users WHERE id = ?').get(req.params.id);
+router.post('/admin/premium-requests/:id/reject', requireAdmin, (req, res) => {
+  db.prepare("UPDATE premium_requests SET status = 'rejected', reviewed_at = datetime('now') WHERE id = ?")
+    .run(req.params.id);
+  res.redirect('/admin?msg=تم+رفض+الطلب');
+});
+
+router.post('/admin/users/:id/toggle-verified', requireAdmin, (req, res) => {
+  const user = db.prepare('SELECT is_verified FROM users WHERE id = ?').get(req.params.id);
   if (!user) return res.redirect('/admin');
-  // دورة: تلقائي (NULL) -> فرض تفعيل (1) -> فرض إلغاء (0) -> تلقائي...
-  let next;
-  if (user.og_override === null) next = 1;
-  else if (user.og_override === 1) next = 0;
-  else next = null;
-  db.prepare('UPDATE users SET og_override = ? WHERE id = ?').run(next, req.params.id);
-  res.redirect('/admin?msg=تم+تحديث+شارة+OG');
+  db.prepare('UPDATE users SET is_verified = ? WHERE id = ?').run(user.is_verified ? 0 : 1, req.params.id);
+  res.redirect('/admin?msg=تم+تحديث+حالة+التوثيق');
 });
 
 router.post('/admin/users/:id/toggle-admin', requireAdmin, (req, res) => {
+  // منع الأدمن من إلغاء صلاحيته عن نفسه بالغلط
   if (Number(req.params.id) === req.session.userId) {
     return res.redirect('/admin?msg=ما+تقدر+تشيل+صلاحية+الأدمن+عن+نفسك');
   }
@@ -63,14 +66,6 @@ router.post('/admin/users/:id/toggle-admin', requireAdmin, (req, res) => {
   if (!user) return res.redirect('/admin');
   db.prepare('UPDATE users SET is_admin = ? WHERE id = ?').run(user.is_admin ? 0 : 1, req.params.id);
   res.redirect('/admin?msg=تم+تحديث+صلاحية+الأدمن');
-});
-
-// ----- تحكم الأدمن بألوان الموقع العامة (النافبار، الأزرار، الصفحة الرئيسية...) -----
-router.post('/admin/site-settings', requireAdmin, (req, res) => {
-  const { site_accent, site_void } = req.body;
-  if (site_accent) db.setSetting('site_accent', site_accent);
-  if (site_void) db.setSetting('site_void', site_void);
-  res.redirect('/admin?msg=تم+تحديث+ألوان+الموقع');
 });
 
 module.exports = router;
