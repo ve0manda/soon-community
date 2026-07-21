@@ -119,8 +119,10 @@
       <div class="panel" id="media">
         <h3>🖼 الصورة الشخصية <% if (user.is_premium) { %>(صورة أو فيديو)<% } %></h3>
         <p class="hint"><% if (!user.is_premium) { %>صورة شخصية متحركة (فيديو) متاحة لحسابات ⭐ Premium فقط. حالياً تقدر ترفع صورة.<% } %></p>
-        <form method="POST" action="/dashboard/avatar" enctype="multipart/form-data" style="display:flex; gap:10px; align-items:center;">
-          <input type="file" name="avatar" accept="<%= user.is_premium ? 'image/*,video/*' : 'image/*' %>" required>
+        <form method="POST" action="/dashboard/avatar" enctype="multipart/form-data" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <input type="file" name="avatar" accept="<%= user.is_premium ? 'image/*,video/*' : 'image/*' %>" required class="file-input-preview">
+          <img class="file-preview-thumb" style="display:none; width:44px; height:44px; border-radius:50%; object-fit:cover; border:1px solid var(--panel-2);">
+          <span class="file-preview-name hint"></span>
           <button type="submit" class="btn">رفع</button>
         </form>
       </div>
@@ -140,8 +142,10 @@
         <% } else { %>
           <div class="hint" style="margin-bottom:12px;">ما فيه خلفية مرفوعة بعد — يستخدم اللون فقط.</div>
         <% } %>
-        <form method="POST" action="/dashboard/background" enctype="multipart/form-data" style="display:flex; gap:10px; align-items:center;">
-          <input type="file" name="background" accept="<%= user.is_premium ? 'image/*,video/*' : 'image/*' %>" required>
+        <form method="POST" action="/dashboard/background" enctype="multipart/form-data" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <input type="file" name="background" accept="<%= user.is_premium ? 'image/*,video/*' : 'image/*' %>" required class="file-input-preview">
+          <img class="file-preview-thumb" style="display:none; width:44px; height:44px; border-radius:8px; object-fit:cover; border:1px solid var(--panel-2);">
+          <span class="file-preview-name hint"></span>
           <button type="submit" class="btn">رفع</button>
         </form>
       </div>
@@ -156,8 +160,9 @@
         <% } else { %>
           <div class="hint" style="margin-bottom:12px;">ما فيه موسيقى مرفوعة بعد.</div>
         <% } %>
-        <form method="POST" action="/dashboard/audio" enctype="multipart/form-data" style="display:flex; gap:10px; align-items:center;">
-          <input type="file" name="audio" accept="audio/*" required>
+        <form method="POST" action="/dashboard/audio" enctype="multipart/form-data" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <input type="file" name="audio" accept="audio/*" required class="file-input-preview">
+          <span class="file-preview-name hint"></span>
           <button type="submit" class="btn">رفع</button>
         </form>
       </div>
@@ -282,6 +287,31 @@
   </div>
 
   <script>
+    // ---- معاينة الملف المختار فوراً قبل الرفع (اسم + صورة مصغّرة إن وجدت) ----
+    document.querySelectorAll('.file-input-preview').forEach(function (input) {
+      input.addEventListener('change', function () {
+        var wrap = input.closest('form');
+        var nameEl = wrap.querySelector('.file-preview-name');
+        var thumbEl = wrap.querySelector('.file-preview-thumb');
+        var file = input.files && input.files[0];
+        if (!file) {
+          if (nameEl) nameEl.textContent = '';
+          if (thumbEl) thumbEl.style.display = 'none';
+          return;
+        }
+        if (nameEl) nameEl.textContent = '✅ ' + file.name;
+        if (thumbEl) {
+          if (file.type.startsWith('image/')) {
+            var reader = new FileReader();
+            reader.onload = function (e) { thumbEl.src = e.target.result; thumbEl.style.display = 'inline-block'; };
+            reader.readAsDataURL(file);
+          } else {
+            thumbEl.style.display = 'none';
+          }
+        }
+      });
+    });
+
     // ---- الحفاظ على مكان الصفحة بعد الحفظ/الرفع (بدل الرجوع لأعلى الصفحة) ----
     document.addEventListener('submit', function (e) {
       if (e.target && e.target.tagName === 'FORM') {
