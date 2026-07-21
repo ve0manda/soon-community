@@ -22,7 +22,23 @@ router.get('/admin', requireAdmin, (req, res) => {
   res.render('admin', { users, q, message: req.query.msg || null, premiumRequests });
 });
 
-router.post('/admin/users/:id/toggle-premium', requireAdmin, (req, res) => {
+// ----- تغيير يوزرنيم أي مستخدم (الأدمن بس يقدر يستخدم حرف واحد) -----
+router.post('/admin/users/:id/username', requireAdmin, (req, res) => {
+  const newUsername = (req.body.new_username || '').trim().toLowerCase();
+
+  if (!/^[a-z0-9._]{1,20}$/.test(newUsername)) {
+    return res.redirect('/admin?msg=يوزرنيم+غير+صالح+(حروف/أرقام/نقطة/شرطة+سفلية+فقط)');
+  }
+  if (/^[._]|[._]$/.test(newUsername) || /[._]{2,}/.test(newUsername)) {
+    return res.redirect('/admin?msg=ما+يجوز+يبدأ/ينتهي+بنقطة+أو+شرطة+سفلية+متكررة');
+  }
+  const existing = db.prepare('SELECT id FROM users WHERE username = ? AND id != ?').get(newUsername, req.params.id);
+  if (existing) {
+    return res.redirect('/admin?msg=اليوزرنيم+هذا+مستخدم+من+شخص+ثاني');
+  }
+  db.prepare('UPDATE users SET username = ? WHERE id = ?').run(newUsername, req.params.id);
+  res.redirect('/admin?msg=تم+تغيير+اليوزرنيم+✅');
+});
   const user = db.prepare('SELECT is_premium FROM users WHERE id = ?').get(req.params.id);
   if (!user) return res.redirect('/admin');
   const newVal = user.is_premium ? 0 : 1;
